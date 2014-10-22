@@ -1,4 +1,7 @@
 pngs/*
 Release_2014_5_28
 *.pyc
+*.png
 bin
+data
+softkinetic

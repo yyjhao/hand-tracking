@@ -166,7 +166,7 @@ function truth_connect_points(points) {
     });
 }
 
-$.when($.get('/subject1_truth.txt'), $.get('/subject1_out.txt')).done(function(r1, r2) {
+$.when($.get('/subject1_truth.txt'), $.get('/yjunstable.txt')).done(function(r1, r2) {
     var content_truth = r1[0],
         content = r2[0];
 
@@ -211,6 +211,7 @@ $.when($.get('/subject1_truth.txt'), $.get('/subject1_out.txt')).done(function(r
     });
 
     var data_truth_vis = data_truth.map(function(points) {
+        return [];
         return truth_connect_points(points);
     });
 
