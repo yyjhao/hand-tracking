@@ -149,7 +149,18 @@ $.when($.get('/temp'), $.get('/result')).done(function(points, handPoints) {
     $(window).keypress(function(e) {
         if (e.keyCode == 0 || e.keyCode == 32) {
             ind += 2;
+            if (ind > ps.length) {
+                ind = 0;
+            }
             setVectors(ps[ind], data[ind/2]);
         }
     });
+
+    setInterval(function() {
+        ind += 2;
+        if (ind > ps.length) {
+            ind = 0;
+        }
+        setVectors(ps[ind], data[ind/2]);
+    }, 200);
 });
