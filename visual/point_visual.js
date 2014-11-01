@@ -1,17 +1,3 @@
-var drawsphere = function(point) {
-    var sphere = new THREE.Mesh(new THREE.SphereGeometry(point[0], point[1], point[2]), new THREE.MeshNormalMaterial());
-    sphere.overdraw = true;
-    return sphere;
-};
-
-var renderer = new THREE.SVGRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-var camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, 1000, 3000);
-camera.position.z = 50;
-var controls = new THREE.OrbitControls(camera);
-
-
 var drawline = function(from, to, material) {
     var geometry;
     geometry = new THREE.Geometry();
@@ -20,36 +6,76 @@ var drawline = function(from, to, material) {
     return new THREE.Line(geometry, material, THREE.LineStrip);
 };
 
-function getOther(p) {
-    return [p[0], p[1], p[2] + 100];
+var renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor( 0xffffff, 1);
+document.body.appendChild(renderer.domElement);
+var camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, -10, 100);
+camera.position.z = 300;
+var controls = new THREE.OrbitControls(camera);
+
+var display = null;
+function setVectors(points, handPoints) {
+    if (display) {
+        display.unbind();
+    }
+
+    display = init(points, handPoints);
+
+    display.render();
+    return display;
 }
 
-var init = function(boxsize, points) {
+var init = function(zs, hand) {
 
     var alpha = 1;
     var aspect = window.innerWidth / window.innerHeight;
     var scene = new THREE.Scene();
+
+    var geometry = new THREE.BufferGeometry();
+
+    var positions = new Float32Array( zs.length*3 );
+    var colors = new Float32Array( zs.length*3 );
+
+    zs.forEach(function(p, k) {
+        positions[ 3 * k ] = k % 320;
+        positions[ 3 * k + 1 ] = 319 - Math.floor(k / 320);
+        positions[ 3 * k + 2 ] = p;
+
+        if (p < 300) {
+            colors[ 3*k ] = 1;
+            colors[ 3*k + 1 ] = 0;
+            colors[ 3*k + 2 ] = 0;
+        } else {
+            colors[ 3*k ] = 1;
+            colors[ 3*k + 1 ] = 1;
+            colors[ 3*k + 2 ] = 1;
+        }
+    });
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+    geometry.addAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
+    geometry.computeBoundingBox();
+
+    var material = new THREE.PointCloudMaterial( { size: 4, vertexColors: THREE.VertexColors } );
+    var cloud = new THREE.PointCloud(geometry, material);
+
+    scene.add(cloud);
+
     var group = new THREE.Object3D();
 
-    points.forEach(function(p) {
+    hand.forEach(function(line) {
         var color = new THREE.Color();
-        color.setHSL(0.4, 0.8, 0.4);
+        color.setHSL(line.color, 0.8, 0.4);
         var material = new THREE.LineBasicMaterial({
             color: color,
             dashSize: 3,
             gapSize: 1,
             linewidth: 20
         });
-        group.add(drawline(p, getOther(p), material));
-
-        // group.add(drawsphere(line.from));
-        // group.add(drawsphere(line.to));
+        group.add(drawline(line.from, line.to, material));
     });
 
     scene.add(group);
-    // group.rotation.x = 3.1415 * (-0.5);
-    // group.position.x = -5;
-    // group.position.y = -5;
     
     var render = function() {
         return renderer.render(scene, camera);
@@ -65,39 +91,70 @@ var init = function(boxsize, points) {
     };
 };
 
-function normalize(points, ref_points) {
-    if (!ref_points) {
-        ref_points = points;
-    }
-    var aves = [0, 0, 0];
-    ref_points.forEach(function(p) {
-        for (var i = 0; i < 3; i++) {
-            aves[i] += p[i];
-        }
-    });
+function connect_points(points) {
+    var connections = [
+        [0, 1],
+        [1, 2],
+        [2, 3],
+        [0, 4],
+        [4, 5],
+        [5, 6],
+        [6, 7],
+        [0, 8],
+        [8, 9],
+        [9, 10],
+        [10, 11],
+        [0, 12],
+        [12, 13],
+        [13, 14],
+        [14, 15],
+        [0, 16],
+        [16, 17],
+        [17, 18],
+        [18, 19]
+    ];
 
-    aves = aves.map(function(n) {
-        return n / ref_points.length;
-    });
-
-    return points.map(function(p) {
-        return [
-            p[0] - aves[0],
-            p[1] - aves[1],
-            p[2] - aves[2]
-        ];
+    return connections.map(function(conn) {
+        return {
+            from: points[conn[0]],
+            to: points[conn[1]],
+            color: 10
+        };
     });
 }
 
-$.get('/temp').done(function(points){
-    var ps = points.split("\n").map(function(line) {
-        return line.split(" ").map(function(num) {
+$.when($.get('/temp'), $.get('/result')).done(function(points, handPoints) {
+    var ps = points[0].trim().split("\n").map(function(line) {
+        return line.trim().split(" ").map(function(num) {
             return parseInt(num);
         });
-    }).filter(function(p) {
-        return p[2] < 30000
     });
-    // console.log(ps.length);
-    console.log( ps.slice(0, 100))
-    init(10, ps.slice(0, 100));
+
+    var data = handPoints[0].trim().split("\n").map(function(line) {
+        var nums = line.trim().split(/,\s*/).map(function(num) {
+            return parseFloat(num);
+        });
+        var result = [];
+        for (var i = 0; i < nums.length / 3; i++) {
+            result.push([
+                nums[i * 3] + 160,
+                nums[i * 3 + 1] + 240,
+                -nums[i * 3 + 2]
+            ]);
+        }
+        return result;
+    }).map(function(points) {
+        return connect_points(points);
+    });
+
+
+    var ind = 0;
+    setVectors(ps[0], data[0]);
+
+    $(window).keypress(function(e) {
+        if (e.keyCode == 0 || e.keyCode == 32) {
+            ind += 2;
+            setVectors(ps[ind], data[ind/2]);
+        }
+    });
 });
