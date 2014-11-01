@@ -38,19 +38,14 @@ var init = function(zs, hand) {
     var colors = new Float32Array( zs.length*3 );
 
     zs.forEach(function(p, k) {
+        if (p > 400) return;
         positions[ 3 * k ] = k % 320;
         positions[ 3 * k + 1 ] = 319 - Math.floor(k / 320);
         positions[ 3 * k + 2 ] = p;
 
-        if (p < 300) {
-            colors[ 3*k ] = 1;
-            colors[ 3*k + 1 ] = 0;
-            colors[ 3*k + 2 ] = 0;
-        } else {
-            colors[ 3*k ] = 1;
-            colors[ 3*k + 1 ] = 1;
-            colors[ 3*k + 2 ] = 1;
-        }
+        colors[ 3*k ] = 1;
+        colors[ 3*k + 1 ] = 0;
+        colors[ 3*k + 2 ] = 0;
     });
     geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
     geometry.addAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
