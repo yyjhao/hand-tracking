@@ -11,7 +11,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor( 0xffffff, 1);
 document.body.appendChild(renderer.domElement);
 var camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, -10, 100);
-camera.position.z = 300;
+camera.position.z = 1000;
 var controls = new THREE.OrbitControls(camera);
 
 var display = null;
@@ -39,8 +39,8 @@ var init = function(zs, hand) {
 
     zs.forEach(function(p, k) {
         if (p > 400) return;
-        positions[ 3 * k ] = k % 320;
-        positions[ 3 * k + 1 ] = 319 - Math.floor(k / 320);
+        positions[ 3 * k ] = k % 320 - 160;
+        positions[ 3 * k + 1 ] = 239 - Math.floor(k / 320) - 120;
         positions[ 3 * k + 2 ] = p;
 
         colors[ 3*k ] = 1;
@@ -132,8 +132,8 @@ $.when($.get('/temp'), $.get('/result')).done(function(points, handPoints) {
         var result = [];
         for (var i = 0; i < nums.length / 3; i++) {
             result.push([
-                nums[i * 3] + 160,
-                nums[i * 3 + 1] + 240,
+                nums[i * 3],
+                nums[i * 3 + 1],
                 -nums[i * 3 + 2]
             ]);
         }
