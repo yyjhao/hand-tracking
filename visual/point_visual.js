@@ -15,18 +15,18 @@ camera.position.z = 1000;
 var controls = new THREE.OrbitControls(camera);
 
 var display = null;
-function setVectors(points, handPoints) {
+function setVectors(points, handPoints, smoothedHand) {
     if (display) {
         display.unbind();
     }
 
-    display = init(points, handPoints);
+    display = init(points, handPoints, smoothedHand);
 
     display.render();
     return display;
 }
 
-var init = function(zs, hand) {
+var init = function(zs, hand, smoothedHand) {
 
     var alpha = 1;
     var aspect = window.innerWidth / window.innerHeight;
@@ -61,6 +61,18 @@ var init = function(zs, hand) {
     hand.forEach(function(line) {
         var color = new THREE.Color();
         color.setHSL(line.color, 0.8, 0.4);
+        var material = new THREE.LineBasicMaterial({
+            color: color,
+            dashSize: 3,
+            gapSize: 1,
+            linewidth: 20
+        });
+        group.add(drawline(line.from, line.to, material));
+    });
+
+    smoothedHand.forEach(function(line) {
+        var color = new THREE.Color();
+        color.setHSL(0.2, 0.8, 0.4);
         var material = new THREE.LineBasicMaterial({
             color: color,
             dashSize: 3,
@@ -118,7 +130,7 @@ function connect_points(points) {
     });
 }
 
-$.when($.get('/temp'), $.get('/result')).done(function(points, handPoints) {
+$.when($.get('/temp'), $.get('/result'), $.get('/smoothed')).done(function(points, handPoints, smoothed) {
     var ps = points[0].trim().split("\n").map(function(line) {
         return line.trim().split(" ").map(function(num) {
             return parseInt(num);
@@ -132,7 +144,24 @@ $.when($.get('/temp'), $.get('/result')).done(function(points, handPoints) {
         var result = [];
         for (var i = 0; i < nums.length / 3; i++) {
             result.push([
-                nums[i * 3],
+                nums[i * 3] - 160,
+                nums[i * 3 + 1],
+                -nums[i * 3 + 2]
+            ]);
+        }
+        return result;
+    }).map(function(points) {
+        return connect_points(points);
+    });
+
+    var smoothedData = smoothed[0].trim().split("\n").map(function(line) {
+        var nums = line.trim().split(/,\s*/).map(function(num) {
+            return parseFloat(num);
+        });
+        var result = [];
+        for (var i = 0; i < nums.length / 3; i++) {
+            result.push([
+                nums[i * 3] + 160,
                 nums[i * 3 + 1],
                 -nums[i * 3 + 2]
             ]);
@@ -144,23 +173,23 @@ $.when($.get('/temp'), $.get('/result')).done(function(points, handPoints) {
 
 
     var ind = 0;
-    setVectors(ps[0], data[0]);
+    setVectors(ps[0], data[0], smoothedData[ind / 2]);
 
-    $(window).keypress(function(e) {
-        if (e.keyCode == 0 || e.keyCode == 32) {
-            ind += 2;
-            if (ind > ps.length) {
-                ind = 0;
-            }
-            setVectors(ps[ind], data[ind/2]);
-        }
-    });
+    // $(window).keypress(function(e) {
+    //     if (e.keyCode == 0 || e.keyCode == 32) {
+    //         ind += 2;
+    //         if (ind > ps.length) {
+    //             ind = 0;
+    //         }
+    //         setVectors(ps[ind], data[ind/2], smoothedData[ind/2]);
+    //     }
+    // });
 
     setInterval(function() {
         ind += 2;
         if (ind > ps.length) {
             ind = 0;
         }
-        setVectors(ps[ind], data[ind/2]);
-    }, 200);
+        setVectors(ps[ind], data[ind/2], smoothedData[ind / 2]);
+    }, 100);
 });
