@@ -1,7 +1,11 @@
 import matplotlib.pyplot as plt
 
+# plot coordinates from f1 and f2 as specified by inds
+
 f1 = "filtered"
 f2 = "bin/pllvtiptouch.txt"
+
+inds = [21, 22, 23]
 
 
 def transpose(mat):
@@ -20,8 +24,6 @@ def get_inds(filename, inds):
                 ]), inds)
         ]
 
-inds = [21, 22, 23]
-
 for a, b in zip(get_inds(f1, inds), get_inds(f2, inds)):
     fig = plt.figure()
 
@@ -33,4 +35,8 @@ for a, b in zip(get_inds(f1, inds), get_inds(f2, inds)):
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels)
 
+    # save the image
+    # fig.savefig(a[1] + '.png')
+
+# show the image
 plt.show()
