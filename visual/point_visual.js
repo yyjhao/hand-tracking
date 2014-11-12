@@ -16,6 +16,7 @@ var controls = new THREE.OrbitControls(camera);
 
 var display = null;
 function setVectors(points, handPoints, smoothedHand) {
+    console.log(smoothedHand)
     if (display) {
         display.unbind();
     }
@@ -175,15 +176,22 @@ $.when($.get('/temp'), $.get('/result'), $.get('/smoothed')).done(function(point
     var ind = 0;
     setVectors(ps[0], data[0], smoothedData[ind / 2]);
 
-    // $(window).keypress(function(e) {
-    //     if (e.keyCode == 0 || e.keyCode == 32) {
-    //         ind += 2;
-    //         if (ind > ps.length) {
-    //             ind = 0;
-    //         }
-    //         setVectors(ps[ind], data[ind/2], smoothedData[ind/2]);
-    //     }
-    // });
+    $(window).keypress(function(e) {
+        console.log(ind);
+        if (e.keyCode == 0 || e.keyCode == 32) {
+            ind += 2;
+            if (ind > ps.length) {
+                ind = 0;
+            }
+            setVectors(ps[ind], data[ind/2], smoothedData[ind/2]);
+        } else if (e.keyCode == 97) {
+            ind -= 2;
+            if (ind < 0) {
+                ind = ps.length - 2;
+            }
+            setVectors(ps[ind], data[ind/2], smoothedData[ind/2]);
+        }
+    });
 
     setInterval(function() {
         ind += 2;
