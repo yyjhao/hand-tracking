@@ -1,6 +1,8 @@
 \documentclass{article}  
 \usepackage{nips13submit_e,times}
+\usepackage{geometry}
 \nipsfinaltrue
+\usepackage{float}
 \usepackage{hyperref}
 \usepackage{amsmath,amssymb}
 \usepackage{qtree}
