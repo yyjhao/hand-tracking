@@ -1,0 +1,1 @@
+pandoc -o report.pdf --template nips.template report.md
